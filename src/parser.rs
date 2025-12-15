@@ -1,3 +1,4 @@
+use crate::possible_values::possible_values_parser_from_slice;
 use crate::{Error, ParseType, ParsedEnv, ProgramOption};
 use clap::{Arg, ArgAction, ArgMatches, Command, builder::ValueParser};
 use std::{collections::HashMap, ffi::OsString};
@@ -350,11 +351,16 @@ impl Parser {
 
             let mut arg = Arg::new(option.id.clone().into_owned())
                 .index(positional_index.unwrap())
-                .required(false) // All args are optional from clap's view, we check requirements later
+                .required(false)
                 .action(action)
                 .allow_hyphen_values(option.allow_hyphen_values)
-                .allow_negative_numbers(option.allow_negative_numbers)
-                .value_parser(ValueParser::os_string());
+                .allow_negative_numbers(option.allow_negative_numbers);
+
+            arg = if let Some(pvs) = option.possible_values {
+                arg.value_parser(possible_values_parser_from_slice(pvs))
+            } else {
+                arg.value_parser(ValueParser::os_string())
+            };
 
             // For repeat positionals, allow multiple values
             if option.parse_type == ParseType::Repeat {
@@ -446,8 +452,13 @@ impl Parser {
                 arg = arg
                     .action(ArgAction::Set)
                     .allow_hyphen_values(option.allow_hyphen_values)
-                    .allow_negative_numbers(option.allow_negative_numbers)
-                    .value_parser(ValueParser::os_string());
+                    .allow_negative_numbers(option.allow_negative_numbers);
+
+                arg = if let Some(pvs) = option.possible_values {
+                    arg.value_parser(possible_values_parser_from_slice(pvs))
+                } else {
+                    arg.value_parser(ValueParser::os_string())
+                };
                 if let Some(default_if_missing) = option.default_if_missing.as_ref() {
                     arg = arg
                         .default_missing_value(default_if_missing.clone().into_owned())
@@ -458,8 +469,13 @@ impl Parser {
                 arg = arg
                     .action(ArgAction::Append)
                     .allow_hyphen_values(option.allow_hyphen_values)
-                    .allow_negative_numbers(option.allow_negative_numbers)
-                    .value_parser(ValueParser::os_string())
+                    .allow_negative_numbers(option.allow_negative_numbers);
+
+                arg = if let Some(pvs) = option.possible_values {
+                    arg.value_parser(possible_values_parser_from_slice(pvs))
+                } else {
+                    arg.value_parser(ValueParser::os_string())
+                };
             }
         };
 

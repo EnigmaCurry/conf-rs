@@ -277,6 +277,7 @@ impl FlagItem {
                 secret: Some(false),
                 is_positional: false,
                 has_serde_source: #has_serde_source,
+                possible_values: None,
             })
         }))
     }

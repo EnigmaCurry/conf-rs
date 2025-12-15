@@ -163,6 +163,7 @@ pub struct ParameterItem {
     default_if_missing: Option<LitStr>,
     value_parser: Option<Expr>,
     value_parser_os: Option<Expr>,
+    value_enum: Option<Span>,
     serde: Option<ParameterSerdeItem>,
     test: Option<ParameterTestItem>,
     doc_string: Option<String>,
@@ -199,6 +200,7 @@ impl ParameterItem {
             default_if_missing: None,
             value_parser: None,
             value_parser_os: None,
+            value_enum: None,
             serde: None,
             test: None,
             doc_string: None,
@@ -277,6 +279,8 @@ impl ParameterItem {
                             &mut result.value_parser_os,
                             Some(parse_required_value::<Expr>(meta)?),
                         )
+                    } else if path.is_ident("value_enum") {
+                        set_once(&path, &mut result.value_enum, Some(path.span()))
                     } else if path.is_ident("allow_hyphen_values") {
                         result.allow_hyphen_values = true;
                         Ok(())
@@ -311,6 +315,28 @@ impl ParameterItem {
                     }
                 })?;
             }
+        }
+
+        // Only allow value_parser OR value_enum
+        if let (Some(value_enum), Some(value_parser)) = (&result.value_enum, &result.value_parser) {
+            return Err(mutually_exclusive_error(
+                "value_enum",
+                value_enum,
+                "value_parser",
+                value_parser,
+            ));
+        }
+
+        // Only allow value_parser_os OR value_enum
+        if let (Some(value_enum), Some(value_parser_os)) =
+            (&result.value_enum, &result.value_parser_os)
+        {
+            return Err(mutually_exclusive_error(
+                "value_enum",
+                value_enum,
+                "value_parser_os",
+                value_parser_os,
+            ));
         }
 
         // Validate positional argument constraints
@@ -540,6 +566,12 @@ impl ParameterItem {
         let secret = quote_opt(&self.secret);
         let is_positional = self.is_positional.is_some();
         let has_serde_source = self.has_serde_source();
+        let possible_values = if self.value_enum.is_some() {
+            let inner_type = self.is_optional_type.as_ref().unwrap_or(&self.field_type);
+            quote! { Some(<#inner_type>::POSSIBLE_VALUES) }
+        } else {
+            quote! { None }
+        };
 
         let aliases = self
             .aliases
@@ -570,6 +602,7 @@ impl ParameterItem {
                 secret: #secret,
                 is_positional: #is_positional,
                 has_serde_source: #has_serde_source,
+                possible_values: #possible_values,
             })
         }))
     }

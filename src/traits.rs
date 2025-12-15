@@ -1,6 +1,6 @@
 use crate::{
     ConfBuilder, ConfContext, ConfValueSource, Error, InnerError, ParsedEnv, Parser, ParserConfig,
-    ProgramOption, introspection, lazybuf::LazyBuf,
+    PossibleValue, ProgramOption, introspection, lazybuf::LazyBuf,
 };
 use std::ffi::OsString;
 
@@ -245,4 +245,10 @@ pub trait Subcommands: Sized {
     /// Run debug assertions on all subcommand variants recursively.
     #[doc(hidden)]
     fn debug_asserts();
+}
+
+/// Implement to provide enumerated values for completion + help.
+pub trait ValueEnum: Sized + 'static {
+    /// Get the possible values
+    fn possible_values() -> &'static [PossibleValue];
 }

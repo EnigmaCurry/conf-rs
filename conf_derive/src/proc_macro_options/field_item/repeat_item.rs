@@ -468,6 +468,7 @@ impl RepeatItem {
               secret: #secret,
               is_positional: #is_positional,
               has_serde_source: #has_serde_source,
+              possible_values: None,
             })
         }))
     }

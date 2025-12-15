@@ -27,6 +27,7 @@ pub mod introspection;
 pub mod lazybuf;
 mod parse_env;
 mod parser;
+mod possible_values;
 mod program_option;
 mod str_to_bool;
 mod styles;
@@ -40,10 +41,12 @@ use str_to_bool::str_to_bool;
 
 // These exports represent public API.
 pub use builder::ConfBuilder;
+pub use conf_derive::ValueEnum;
 pub use error::Error;
 pub use find_parameter::find_parameter;
+pub use possible_values::PossibleValue;
 pub use styles::Styles;
-pub use traits::{Conf, Subcommands};
+pub use traits::{Conf, Subcommands, ValueEnum};
 
 // Re-export anstyle for users to create Style objects
 pub use anstyle;
@@ -100,3 +103,5 @@ pub trait InnerTypeHelper {
 impl<T> InnerTypeHelper for Vec<T> {
     type Ty = T;
 }
+
+extern crate self as conf;
